@@ -1,0 +1,107 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  USER
+}
+
+enum UserStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum LoanStatus {
+  BORROWED
+  RETURNED
+}
+
+model User {
+  id        String     @id @default(uuid())
+  clerkId   String     @unique @map("clerk_id")
+  name      String
+  email     String     @unique
+  phone     String?
+  role      Role       @default(USER)
+  status    UserStatus @default(PENDING)
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+
+  addedBooks   Book[]        @relation("AddedBooks")
+  loans        Loan[]        @relation("BorrowerLoans")
+  issuedLoans  Loan[]        @relation("IssuerLoans")
+  bookRequests BookRequest[]
+
+  @@index([clerkId])
+  @@index([email])
+  @@index([status])
+  @@map("users")
+}
+
+model Book {
+  id            String    @id @default(uuid())
+  title         String
+  author        String
+  language      String
+  genre         String?
+  totalQuantity Int       @default(1) @map("total_quantity")
+  description   String?
+  coverUrl      String?   @map("cover_url")
+  addedById     String    @map("added_by")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+
+  addedBy  User          @relation("AddedBooks", fields: [addedById], references: [id])
+  loans    Loan[]
+  requests BookRequest[]
+
+  @@index([title])
+  @@index([deletedAt])
+  @@map("books")
+}
+
+model Loan {
+  id         String     @id @default(uuid())
+  bookId     String     @map("book_id")
+  userId     String     @map("user_id")
+  issuedById String     @map("issued_by")
+  issueDate  DateTime   @default(now()) @map("issue_date")
+  dueDate    DateTime   @map("due_date")
+  returnDate DateTime?  @map("return_date")
+  status     LoanStatus @default(BORROWED)
+  createdAt  DateTime   @default(now()) @map("created_at")
+
+  book     Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  user     User @relation("BorrowerLoans", fields: [userId], references: [id], onDelete: Cascade)
+  issuedBy User @relation("IssuerLoans", fields: [issuedById], references: [id], onDelete: Cascade)
+
+  @@index([bookId])
+  @@index([userId])
+  @@index([status])
+  @@index([status, dueDate])
+  @@map("loans")
+}
+
+model BookRequest {
+  id          String   @id @default(uuid())
+  bookId      String   @map("book_id")
+  userId      String   @map("user_id")
+  requestedAt DateTime @default(now()) @map("requested_at")
+  notified    Boolean  @default(false)
+
+  book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([bookId, userId])
+  @@map("book_requests")
+}
