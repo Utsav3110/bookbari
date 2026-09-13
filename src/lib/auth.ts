@@ -2,8 +2,9 @@ import { auth, currentUser } from '@clerk/nextjs/server';
 import { prisma } from './prisma';
 import { Role, UserStatus } from '@prisma/client';
 import { redirect } from 'next/navigation';
+import { cache } from 'react';
 
-export async function getCurrentDbUser() {
+export const getCurrentDbUser = cache(async () => {
   try {
     const { userId } = await auth();
     if (!userId) return null;
@@ -43,7 +44,7 @@ export async function getCurrentDbUser() {
     console.error('Error in getCurrentDbUser:', error);
     return null;
   }
-}
+});
 
 export async function requireApprovedUser() {
   const dbUser = await getCurrentDbUser();

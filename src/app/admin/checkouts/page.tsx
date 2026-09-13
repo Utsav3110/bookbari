@@ -21,23 +21,43 @@ export default async function AdminCheckoutsPage({ searchParams }: AdminCheckout
   const activeTab = searchParams.tab === 'returned' ? 'returned' : 'active';
   const query = searchParams.q || '';
 
-  // Fetch approved users for selection dropdown
-  const approvedUsers = await prisma.user.findMany({
-    where: { status: UserStatus.APPROVED },
-    orderBy: { name: 'asc' },
-    select: { id: true, name: true, email: true, phone: true },
-  });
-
-  // Fetch active books with available count calculation
-  const allBooks = await prisma.book.findMany({
-    where: { deletedAt: null },
-    include: {
-      loans: {
-        where: { status: LoanStatus.BORROWED },
+  // Fetch approved users, active books, and checkouts list in parallel
+  const [approvedUsers, allBooks, checkouts] = await Promise.all([
+    prisma.user.findMany({
+      where: { status: UserStatus.APPROVED },
+      orderBy: { name: 'asc' },
+      select: { id: true, name: true, email: true, phone: true },
+    }),
+    prisma.book.findMany({
+      where: { deletedAt: null },
+      include: {
+        loans: {
+          where: { status: LoanStatus.BORROWED },
+        },
       },
-    },
-    orderBy: { title: 'asc' },
-  });
+      orderBy: { title: 'asc' },
+    }),
+    prisma.loan.findMany({
+      where: {
+        status: activeTab === 'active' ? LoanStatus.BORROWED : LoanStatus.RETURNED,
+        ...(query
+          ? {
+              OR: [
+                { book: { title: { contains: query, mode: 'insensitive' } } },
+                { user: { name: { contains: query, mode: 'insensitive' } } },
+                { user: { email: { contains: query, mode: 'insensitive' } } },
+              ],
+            }
+          : {}),
+      },
+      include: {
+        book: true,
+        user: true,
+        issuedBy: true,
+      },
+      orderBy: activeTab === 'active' ? { dueDate: 'asc' } : { returnDate: 'desc' },
+    }),
+  ]);
 
   const availableBooks = allBooks
     .map((b) => ({
@@ -48,28 +68,6 @@ export default async function AdminCheckoutsPage({ searchParams }: AdminCheckout
       totalQuantity: b.totalQuantity,
     }))
     .filter((b) => b.availableCount > 0);
-
-  // Fetch checkouts list based on active tab & query filter
-  const checkouts = await prisma.loan.findMany({
-    where: {
-      status: activeTab === 'active' ? LoanStatus.BORROWED : LoanStatus.RETURNED,
-      ...(query
-        ? {
-            OR: [
-              { book: { title: { contains: query, mode: 'insensitive' } } },
-              { user: { name: { contains: query, mode: 'insensitive' } } },
-              { user: { email: { contains: query, mode: 'insensitive' } } },
-            ],
-          }
-        : {}),
-    },
-    include: {
-      book: true,
-      user: true,
-      issuedBy: true,
-    },
-    orderBy: activeTab === 'active' ? { dueDate: 'asc' } : { returnDate: 'desc' },
-  });
 
   return (
     <div className="space-y-8">

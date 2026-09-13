@@ -20,8 +20,8 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { userId } = await auth();
   const dbUser = await getCurrentDbUser();
+  const userId = dbUser?.clerkId ?? null;
   const showSidebar = dbUser?.status === 'APPROVED';
 
   return (

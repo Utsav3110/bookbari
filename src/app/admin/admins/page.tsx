@@ -8,22 +8,22 @@ import { Role, UserStatus } from '@prisma/client';
 export default async function AdminAdminsPage() {
   const currentSuperAdmin = await requireSuperAdmin();
 
-  // Fetch all admin level users
-  const adminUsers = await prisma.user.findMany({
-    where: {
-      role: { in: [Role.ADMIN, Role.SUPER_ADMIN] },
-    },
-    orderBy: { role: 'desc' },
-  });
-
-  // Fetch approved regular users eligible for promotion
-  const promotableUsers = await prisma.user.findMany({
-    where: {
-      role: Role.USER,
-      status: UserStatus.APPROVED,
-    },
-    orderBy: { name: 'asc' },
-  });
+  // Fetch all admin level users and approved regular users eligible for promotion in parallel
+  const [adminUsers, promotableUsers] = await Promise.all([
+    prisma.user.findMany({
+      where: {
+        role: { in: [Role.ADMIN, Role.SUPER_ADMIN] },
+      },
+      orderBy: { role: 'desc' },
+    }),
+    prisma.user.findMany({
+      where: {
+        role: Role.USER,
+        status: UserStatus.APPROVED,
+      },
+      orderBy: { name: 'asc' },
+    }),
+  ]);
 
   return (
     <div className="space-y-8">

@@ -45,32 +45,37 @@ export default async function CatalogPage({ searchParams }: BooksPageProps) {
     whereCondition.genre = selectedGenre;
   }
 
-  // Fetch unique languages & genres for filter dropdowns
-  const allBooksForFilters = await prisma.book.findMany({
-    where: { deletedAt: null },
-    select: { language: true, genre: true },
-  });
-
-  const languages = Array.from(new Set(allBooksForFilters.map((b) => b.language))).filter(Boolean);
-  const genres = Array.from(new Set(allBooksForFilters.map((b) => b.genre))).filter(Boolean) as string[];
-
-  // Fetch books count and paginated books
-  const totalBooksCount = await prisma.book.count({ where: whereCondition });
-  const totalPages = Math.ceil(totalBooksCount / pageSize);
-
-  const books = await prisma.book.findMany({
-    where: whereCondition,
-    include: {
-      loans: {
-        where: { status: LoanStatus.BORROWED },
-        select: { dueDate: true },
-        orderBy: { dueDate: 'asc' },
+  // Fetch unique languages, genres, count, and paginated books in parallel
+  const [langRecords, genreRecords, totalBooksCount, books] = await Promise.all([
+    prisma.book.findMany({
+      where: { deletedAt: null },
+      select: { language: true },
+      distinct: ['language'],
+    }),
+    prisma.book.findMany({
+      where: { deletedAt: null, genre: { not: null } },
+      select: { genre: true },
+      distinct: ['genre'],
+    }),
+    prisma.book.count({ where: whereCondition }),
+    prisma.book.findMany({
+      where: whereCondition,
+      include: {
+        loans: {
+          where: { status: LoanStatus.BORROWED },
+          select: { dueDate: true },
+          orderBy: { dueDate: 'asc' },
+        },
       },
-    },
-    orderBy: { title: 'asc' },
-    skip: (currentPage - 1) * pageSize,
-    take: pageSize,
-  });
+      orderBy: { title: 'asc' },
+      skip: (currentPage - 1) * pageSize,
+      take: pageSize,
+    }),
+  ]);
+
+  const languages = langRecords.map((b) => b.language).filter(Boolean);
+  const genres = genreRecords.map((b) => b.genre).filter(Boolean) as string[];
+  const totalPages = Math.ceil(totalBooksCount / pageSize);
 
   return (
     <div className="space-y-6">

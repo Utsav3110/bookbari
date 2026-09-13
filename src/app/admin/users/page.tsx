@@ -25,29 +25,30 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
     ];
   }
 
-  const pendingUsers = await prisma.user.findMany({
-    where: {
-      ...whereCondition,
-      status: UserStatus.PENDING,
-    },
-    orderBy: { createdAt: 'desc' },
-  });
-
-  const approvedUsers = await prisma.user.findMany({
-    where: {
-      ...whereCondition,
-      status: UserStatus.APPROVED,
-    },
-    orderBy: { name: 'asc' },
-  });
-
-  const rejectedUsers = await prisma.user.findMany({
-    where: {
-      ...whereCondition,
-      status: UserStatus.REJECTED,
-    },
-    orderBy: { updatedAt: 'desc' },
-  });
+  // Fetch pending, approved, and rejected users in parallel
+  const [pendingUsers, approvedUsers, rejectedUsers] = await Promise.all([
+    prisma.user.findMany({
+      where: {
+        ...whereCondition,
+        status: UserStatus.PENDING,
+      },
+      orderBy: { createdAt: 'desc' },
+    }),
+    prisma.user.findMany({
+      where: {
+        ...whereCondition,
+        status: UserStatus.APPROVED,
+      },
+      orderBy: { name: 'asc' },
+    }),
+    prisma.user.findMany({
+      where: {
+        ...whereCondition,
+        status: UserStatus.REJECTED,
+      },
+      orderBy: { updatedAt: 'desc' },
+    }),
+  ]);
 
   return (
     <div className="space-y-8">

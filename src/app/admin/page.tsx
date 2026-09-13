@@ -9,35 +9,39 @@ export default async function AdminDashboardPage() {
 
   const now = new Date();
 
-  // Metrics query
-  const totalBooks = await prisma.book.count({ where: { deletedAt: null } });
-  const pendingUsersCount = await prisma.user.count({ where: { status: UserStatus.PENDING } });
-  const activeLoansCount = await prisma.loan.count({ where: { status: LoanStatus.BORROWED } });
-  
-  const overdueLoansCount = await prisma.loan.count({
-    where: {
-      status: LoanStatus.BORROWED,
-      dueDate: { lt: now },
-    },
-  });
-
-  // Recent pending users (max 3)
-  const recentPendingUsers = await prisma.user.findMany({
-    where: { status: UserStatus.PENDING },
-    orderBy: { createdAt: 'desc' },
-    take: 3,
-  });
-
-  // Recent overdue loans (max 3)
-  const recentOverdueLoans = await prisma.loan.findMany({
-    where: {
-      status: LoanStatus.BORROWED,
-      dueDate: { lt: now },
-    },
-    include: { book: true, user: true },
-    orderBy: { dueDate: 'asc' },
-    take: 3,
-  });
+  // Execute dashboard metrics and recent query lists in parallel
+  const [
+    totalBooks,
+    pendingUsersCount,
+    activeLoansCount,
+    overdueLoansCount,
+    recentPendingUsers,
+    recentOverdueLoans,
+  ] = await Promise.all([
+    prisma.book.count({ where: { deletedAt: null } }),
+    prisma.user.count({ where: { status: UserStatus.PENDING } }),
+    prisma.loan.count({ where: { status: LoanStatus.BORROWED } }),
+    prisma.loan.count({
+      where: {
+        status: LoanStatus.BORROWED,
+        dueDate: { lt: now },
+      },
+    }),
+    prisma.user.findMany({
+      where: { status: UserStatus.PENDING },
+      orderBy: { createdAt: 'desc' },
+      take: 3,
+    }),
+    prisma.loan.findMany({
+      where: {
+        status: LoanStatus.BORROWED,
+        dueDate: { lt: now },
+      },
+      include: { book: true, user: true },
+      orderBy: { dueDate: 'asc' },
+      take: 3,
+    }),
+  ]);
 
   return (
     <div className="space-y-8">
