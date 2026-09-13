@@ -8,8 +8,6 @@ import { BookOpen } from 'lucide-react';
 import Link from 'next/link';
 import './globals.css';
 
-import { auth } from '@clerk/nextjs/server';
-
 export const metadata: Metadata = {
   title: 'Bookbari — Library Lending Tracker',
   description: 'Track in-house book lending: who has which book, due dates, and overdue items.',

@@ -6,6 +6,19 @@ import { requireAdmin, requireSuperAdmin, requireApprovedUser } from '@/lib/auth
 import { UserStatus, Role, LoanStatus } from '@prisma/client';
 import { z } from 'zod';
 
+// --- VALIDATION HELPERS ---
+
+const uuidSchema = z.string().uuid('Invalid ID format');
+
+// Only allow digits, spaces, dashes, parens, dots, and leading +
+const phoneRegex = /^[+\d\s\-().]{5,20}$/;
+
+function validateUuid(id: string): { valid: true } | { valid: false; error: string } {
+  const result = uuidSchema.safeParse(id);
+  if (!result.success) return { valid: false, error: 'Invalid ID format' };
+  return { valid: true };
+}
+
 // Zod schemas for input validation
 const bookSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200),
@@ -14,7 +27,10 @@ const bookSchema = z.object({
   genre: z.string().optional(),
   totalQuantity: z.number().int().min(1, 'Quantity must be at least 1'),
   description: z.string().optional(),
-  coverUrl: z.string().url('Must be a valid URL').or(z.literal('')).optional(),
+  coverUrl: z.string().url('Must be a valid URL').refine(
+    (url) => url === '' || url.startsWith('https://'),
+    { message: 'Cover URL must use HTTPS' }
+  ).or(z.literal('')).optional(),
 });
 
 const loanSchema = z.object({
@@ -35,8 +51,8 @@ export async function updateUserPhoneAction(phone: string) {
   }
 
   const trimmedPhone = phone.trim();
-  if (!trimmedPhone || trimmedPhone.length < 5) {
-    return { error: 'Please enter a valid contact phone number' };
+  if (!trimmedPhone || !phoneRegex.test(trimmedPhone)) {
+    return { error: 'Please enter a valid phone number (digits, spaces, dashes, 5-20 characters)' };
   }
 
   await prisma.user.update({
@@ -52,6 +68,9 @@ export async function updateUserPhoneAction(phone: string) {
 // --- ADMIN USER ACTIONS ---
 
 export async function approveUserAction(userId: string) {
+  const idCheck = validateUuid(userId);
+  if (!idCheck.valid) return { error: idCheck.error };
+
   const admin = await requireAdmin();
 
   const userToApprove = await prisma.user.findUnique({ where: { id: userId } });
@@ -74,6 +93,9 @@ export async function approveUserAction(userId: string) {
 }
 
 export async function rejectUserAction(userId: string) {
+  const idCheck = validateUuid(userId);
+  if (!idCheck.valid) return { error: idCheck.error };
+
   const admin = await requireAdmin();
 
   const userToReject = await prisma.user.findUnique({ where: { id: userId } });
@@ -97,6 +119,9 @@ export async function rejectUserAction(userId: string) {
 // --- SUPER ADMIN ACTIONS ---
 
 export async function promoteToAdminAction(userId: string) {
+  const idCheck = validateUuid(userId);
+  if (!idCheck.valid) return { error: idCheck.error };
+
   await requireSuperAdmin();
 
   const targetUser = await prisma.user.findUnique({ where: { id: userId } });
@@ -119,10 +144,22 @@ export async function promoteToAdminAction(userId: string) {
 }
 
 export async function demoteToUserAction(userId: string) {
+  const idCheck = validateUuid(userId);
+  if (!idCheck.valid) return { error: idCheck.error };
+
   const currentSuperAdmin = await requireSuperAdmin();
 
   if (userId === currentSuperAdmin.id) {
     return { error: 'Super Admin cannot demote themselves' };
+  }
+
+  // Verify the target user is actually an admin before demoting
+  const targetUser = await prisma.user.findUnique({ where: { id: userId } });
+  if (!targetUser) {
+    return { error: 'User not found' };
+  }
+  if (targetUser.role !== Role.ADMIN) {
+    return { error: 'Only users with Admin role can be demoted' };
   }
 
   await prisma.user.update({
@@ -168,6 +205,9 @@ export async function addBookAction(formData: FormData) {
 }
 
 export async function editBookAction(bookId: string, formData: FormData) {
+  const idCheck = validateUuid(bookId);
+  if (!idCheck.valid) return { error: idCheck.error };
+
   await requireAdmin();
 
   const rawData = {
@@ -211,6 +251,9 @@ export async function editBookAction(bookId: string, formData: FormData) {
 }
 
 export async function deleteBookAction(bookId: string) {
+  const idCheck = validateUuid(bookId);
+  if (!idCheck.valid) return { error: idCheck.error };
+
   await requireAdmin();
 
   const activeLoansCount = await prisma.loan.count({
@@ -263,58 +306,67 @@ export async function issueCheckoutAction(formData: FormData) {
     return { error: 'Due date must be after the issue date' };
   }
 
-  // 1. Verify target user is approved
-  const borrower = await prisma.user.findUnique({
-    where: { id: rawUserId },
-  });
+  // Use a serializable transaction to prevent race conditions on the last copy
+  const txResult = await prisma.$transaction(async (tx) => {
+    // 1. Verify target user is approved
+    const borrower = await tx.user.findUnique({
+      where: { id: rawUserId },
+    });
 
-  if (!borrower || borrower.status !== UserStatus.APPROVED) {
-    return { error: 'Books can only be checked out to approved users' };
-  }
+    if (!borrower || borrower.status !== UserStatus.APPROVED) {
+      return { error: 'Books can only be checked out to approved users' };
+    }
 
-  // 2. Check if user already has an active borrowing for this exact book
-  const existingActiveLoan = await prisma.loan.findFirst({
-    where: {
-      bookId: rawBookId,
-      userId: rawUserId,
-      status: LoanStatus.BORROWED,
-    },
-  });
-
-  if (existingActiveLoan) {
-    return { error: 'User already has an active checked-out copy of this book' };
-  }
-
-  // 3. Verify availability
-  const book = await prisma.book.findUnique({
-    where: { id: rawBookId },
-    include: {
-      loans: {
-        where: { status: LoanStatus.BORROWED },
+    // 2. Check if user already has an active borrowing for this exact book
+    const existingActiveLoan = await tx.loan.findFirst({
+      where: {
+        bookId: rawBookId,
+        userId: rawUserId,
+        status: LoanStatus.BORROWED,
       },
-    },
+    });
+
+    if (existingActiveLoan) {
+      return { error: 'User already has an active checked-out copy of this book' };
+    }
+
+    // 3. Verify availability
+    const book = await tx.book.findUnique({
+      where: { id: rawBookId },
+      include: {
+        loans: {
+          where: { status: LoanStatus.BORROWED },
+        },
+      },
+    });
+
+    if (!book || book.deletedAt) {
+      return { error: 'Book not found' };
+    }
+
+    const availableQuantity = book.totalQuantity - book.loans.length;
+    if (availableQuantity <= 0) {
+      return { error: 'No available copies left for this book' };
+    }
+
+    // 4. Create borrowing checkout record
+    await tx.loan.create({
+      data: {
+        bookId: rawBookId,
+        userId: rawUserId,
+        issuedById: admin.id,
+        issueDate,
+        dueDate,
+        status: LoanStatus.BORROWED,
+      },
+    });
+
+    return { success: true as const };
   });
 
-  if (!book || book.deletedAt) {
-    return { error: 'Book not found' };
+  if ('error' in txResult) {
+    return txResult;
   }
-
-  const availableQuantity = book.totalQuantity - book.loans.length;
-  if (availableQuantity <= 0) {
-    return { error: 'No available copies left for this book' };
-  }
-
-  // 4. Create borrowing checkout record
-  await prisma.loan.create({
-    data: {
-      bookId: rawBookId,
-      userId: rawUserId,
-      issuedById: admin.id,
-      issueDate,
-      dueDate,
-      status: LoanStatus.BORROWED,
-    },
-  });
 
   revalidatePath('/admin/checkouts');
   revalidatePath('/admin/overdue');
@@ -324,6 +376,9 @@ export async function issueCheckoutAction(formData: FormData) {
 }
 
 export async function returnCheckoutAction(loanId: string) {
+  const idCheck = validateUuid(loanId);
+  if (!idCheck.valid) return { error: idCheck.error };
+
   await requireAdmin();
 
   const loan = await prisma.loan.findUnique({
@@ -378,6 +433,9 @@ export async function returnCheckoutAction(loanId: string) {
 // --- USER STRETCH FEATURE: NOTIFY ME ---
 
 export async function requestBookNotificationAction(bookId: string) {
+  const idCheck = validateUuid(bookId);
+  if (!idCheck.valid) return { error: idCheck.error };
+
   const user = await requireApprovedUser();
 
   const existingRequest = await prisma.bookRequest.findUnique({

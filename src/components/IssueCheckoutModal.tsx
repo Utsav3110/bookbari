@@ -67,8 +67,10 @@ export function IssueCheckoutModal({ availableBooks, approvedUsers }: IssueCheck
 
     setLoading(false);
 
-    if (result?.error) {
+    if (result && 'error' in result && result.error) {
       setError(result.error);
+    } else if (result && 'error' in result) {
+      setError('An unknown error occurred');
     } else {
       setIsOpen(false);
       setSelectedBookId('');
