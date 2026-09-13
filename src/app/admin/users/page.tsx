@@ -7,15 +7,16 @@ import { SearchInput } from '@/components/SearchInput';
 import { Check, X, Users, Search, UserCheck, ShieldAlert } from 'lucide-react';
 
 interface AdminUsersPageProps {
-  searchParams: {
+  searchParams: Promise<{
     q?: string;
-  };
+  }>;
 }
 
 export default async function AdminUsersPage({ searchParams }: AdminUsersPageProps) {
+  const resolvedSearchParams = await searchParams;
   const currentAdmin = await requireAdmin();
 
-  const query = searchParams.q || '';
+  const query = resolvedSearchParams.q || '';
 
   const whereCondition: any = {};
   if (query) {

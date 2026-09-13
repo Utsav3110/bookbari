@@ -9,17 +9,18 @@ import { Clock, CheckCircle, AlertTriangle } from 'lucide-react';
 import { LoanStatus, UserStatus } from '@prisma/client';
 
 interface AdminCheckoutsPageProps {
-  searchParams: {
+  searchParams: Promise<{
     tab?: string;
     q?: string;
-  };
+  }>;
 }
 
 export default async function AdminCheckoutsPage({ searchParams }: AdminCheckoutsPageProps) {
+  const resolvedSearchParams = await searchParams;
   await requireAdmin();
 
-  const activeTab = searchParams.tab === 'returned' ? 'returned' : 'active';
-  const query = searchParams.q || '';
+  const activeTab = resolvedSearchParams.tab === 'returned' ? 'returned' : 'active';
+  const query = resolvedSearchParams.q || '';
 
   // Fetch approved users, active books, and checkouts list in parallel
   const [approvedUsers, allBooks, checkouts] = await Promise.all([

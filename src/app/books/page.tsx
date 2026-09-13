@@ -8,21 +8,22 @@ import { BookOpen, Clock } from 'lucide-react';
 import { LoanStatus } from '@prisma/client';
 
 interface BooksPageProps {
-  searchParams: {
+  searchParams: Promise<{
     q?: string;
     lang?: string;
     genre?: string;
     page?: string;
-  };
+  }>;
 }
 
 export default async function CatalogPage({ searchParams }: BooksPageProps) {
   await requireApprovedUser();
 
-  const query = searchParams.q || '';
-  const selectedLang = searchParams.lang || '';
-  const selectedGenre = searchParams.genre || '';
-  const currentPage = Math.max(1, parseInt(searchParams.page || '1', 10));
+  const resolvedSearchParams = await searchParams;
+  const query = resolvedSearchParams.q || '';
+  const selectedLang = resolvedSearchParams.lang || '';
+  const selectedGenre = resolvedSearchParams.genre || '';
+  const currentPage = Math.max(1, parseInt(resolvedSearchParams.page || '1', 10));
   const pageSize = 20;
 
   // Build filter condition

@@ -8,17 +8,18 @@ import { ArrowLeft, Clock, Save, History, BookOpen } from 'lucide-react';
 import { LoanStatus } from '@prisma/client';
 
 interface EditBookPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function EditBookPage({ params }: EditBookPageProps) {
+  const { id } = await params;
   await requireAdmin();
 
   const book = await prisma.book.findFirst({
     where: {
-      id: params.id,
+      id,
       deletedAt: null,
     },
     include: {

@@ -8,15 +8,16 @@ import { Search, Trash2, Edit3, BookOpen } from 'lucide-react';
 import { LoanStatus } from '@prisma/client';
 
 interface AdminBooksPageProps {
-  searchParams: {
+  searchParams: Promise<{
     q?: string;
-  };
+  }>;
 }
 
 export default async function AdminBooksPage({ searchParams }: AdminBooksPageProps) {
+  const resolvedSearchParams = await searchParams;
   await requireAdmin();
 
-  const query = searchParams.q || '';
+  const query = resolvedSearchParams.q || '';
 
   const books = await prisma.book.findMany({
     where: {

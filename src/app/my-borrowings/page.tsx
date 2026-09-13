@@ -6,14 +6,15 @@ import { Clock, CheckCircle, BookOpen, AlertTriangle, ArrowRight } from 'lucide-
 import { LoanStatus } from '@prisma/client';
 
 interface MyBorrowingsPageProps {
-  searchParams: {
+  searchParams: Promise<{
     tab?: string;
-  };
+  }>;
 }
 
 export default async function MyBorrowingsPage({ searchParams }: MyBorrowingsPageProps) {
+  const resolvedSearchParams = await searchParams;
   const user = await requireApprovedUser();
-  const activeTab = searchParams.tab === 'history' ? 'history' : 'active';
+  const activeTab = resolvedSearchParams.tab === 'history' ? 'history' : 'active';
 
   const borrowings = await prisma.loan.findMany({
     where: {

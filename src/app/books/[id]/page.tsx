@@ -8,17 +8,18 @@ import { LoanStatus } from '@prisma/client';
 import { requestBookNotificationAction } from '@/app/actions';
 
 interface BookDetailPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function BookDetailPage({ params }: BookDetailPageProps) {
+  const { id } = await params;
   const user = await requireApprovedUser();
 
   const book = await prisma.book.findFirst({
     where: {
-      id: params.id,
+      id,
       deletedAt: null,
     },
     include: {

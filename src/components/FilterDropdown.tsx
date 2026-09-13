@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { useTransition } from 'react';
 
 interface FilterDropdownProps {
   name: string;
@@ -18,16 +19,19 @@ export function FilterDropdown({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
 
   const handleChange = (value: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-    if (value) {
-      params.set(name, value);
-    } else {
-      params.delete(name);
-    }
-    params.set('page', '1'); // Reset pagination on filter change
-    router.replace(`${pathname}?${params.toString()}`);
+    startTransition(() => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (value) {
+        params.set(name, value);
+      } else {
+        params.delete(name);
+      }
+      params.set('page', '1'); // Reset pagination on filter change
+      router.replace(`${pathname}?${params.toString()}`);
+    });
   };
 
   return (

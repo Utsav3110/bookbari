@@ -26,20 +26,30 @@ export function SearchInput({
     setText(searchParams.get('q') || '');
   }, [searchParams]);
 
+  useEffect(() => {
+    // Skip initial mount sync if text matches searchParams
+    const currentQ = searchParams.get('q') || '';
+    if (text === currentQ) return;
+
+    const timer = setTimeout(() => {
+      startTransition(() => {
+        const params = new URLSearchParams(searchParams.toString());
+        if (text.trim()) {
+          params.set('q', text.trim());
+        } else {
+          params.delete('q');
+        }
+        params.set('page', '1');
+
+        router.replace(`${pathname}?${params.toString()}`);
+      });
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [text, pathname, router, searchParams]);
+
   const handleSearch = (term: string) => {
     setText(term);
-
-    startTransition(() => {
-      const params = new URLSearchParams(searchParams.toString());
-      if (term.trim()) {
-        params.set('q', term.trim());
-      } else {
-        params.delete('q');
-      }
-      params.set('page', '1'); // Reset pagination to page 1 on new search
-
-      router.replace(`${pathname}?${params.toString()}`);
-    });
   };
 
   const handleClear = () => {
