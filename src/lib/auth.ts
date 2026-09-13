@@ -36,7 +36,11 @@ export async function getCurrentDbUser() {
     }
 
     return dbUser;
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.digest === 'DYNAMIC_SERVER_USAGE' || error?.digest?.startsWith('NEXT_REDIRECT')) {
+      throw error;
+    }
+    console.error('Error in getCurrentDbUser:', error);
     return null;
   }
 }

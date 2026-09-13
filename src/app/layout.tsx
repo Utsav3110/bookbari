@@ -8,6 +8,8 @@ import { BookOpen } from 'lucide-react';
 import Link from 'next/link';
 import './globals.css';
 
+import { auth } from '@clerk/nextjs/server';
+
 export const metadata: Metadata = {
   title: 'Bookbari — Library Lending Tracker',
   description: 'Track in-house book lending: who has which book, due dates, and overdue items.',
@@ -18,6 +20,7 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const { userId } = await auth();
   const dbUser = await getCurrentDbUser();
   const showSidebar = dbUser?.status === 'APPROVED';
 
@@ -58,7 +61,7 @@ export default async function RootLayout({
 
                     <div className="flex items-center gap-3">
                       <ThemeToggle />
-                      {dbUser ? (
+                      {userId || dbUser ? (
                         <UserButton />
                       ) : (
                         <SignInButton mode="modal">
