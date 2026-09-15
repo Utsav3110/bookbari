@@ -1,11 +1,12 @@
-import { requireApprovedUser } from '@/lib/auth';
+
 import { prisma } from '@/lib/prisma';
 import { formatDate } from '@/lib/utils';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { BookOpen, Clock, ArrowLeft, Bell, CheckCircle2 } from 'lucide-react';
+import { BookOpen, Clock, ArrowLeft } from 'lucide-react';
 import { LoanStatus } from '@prisma/client';
-import { requestBookNotificationAction } from '@/app/actions';
+import { WhatsAppRequestButton } from '@/components/WhatsAppRequestButton';
+
 
 interface BookDetailPageProps {
   params: Promise<{
@@ -15,7 +16,6 @@ interface BookDetailPageProps {
 
 export default async function BookDetailPage({ params }: BookDetailPageProps) {
   const { id } = await params;
-  const user = await requireApprovedUser();
 
   const book = await prisma.book.findFirst({
     where: {
@@ -25,11 +25,7 @@ export default async function BookDetailPage({ params }: BookDetailPageProps) {
     include: {
       loans: {
         where: { status: LoanStatus.BORROWED },
-        include: { user: true },
         orderBy: { dueDate: 'asc' },
-      },
-      requests: {
-        where: { userId: user.id },
       },
     },
   });
@@ -41,7 +37,6 @@ export default async function BookDetailPage({ params }: BookDetailPageProps) {
   const activeLoansCount = book.loans.length;
   const availableCount = book.totalQuantity - activeLoansCount;
   const isAvailable = availableCount > 0;
-  const hasRequested = book.requests.length > 0;
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -77,11 +72,11 @@ export default async function BookDetailPage({ params }: BookDetailPageProps) {
 
           <div className="w-full text-center">
             {isAvailable ? (
-              <span className="badge badge-success text-xs py-1.5 px-3">
+              <span className="badge badge-success text-xs py-1.5 px-3 block w-max mx-auto">
                 {availableCount} of {book.totalQuantity} Available
               </span>
             ) : (
-              <span className="badge badge-warning text-xs py-1.5 px-3">
+              <span className="badge badge-warning text-xs py-1.5 px-3 block w-max mx-auto">
                 All {book.totalQuantity} copies checked out
               </span>
             )}
@@ -132,6 +127,17 @@ export default async function BookDetailPage({ params }: BookDetailPageProps) {
             </div>
           )}
 
+          {/* Action Button */}
+          {isAvailable && (
+            <div className="pt-2 border-t border-paper-300 dark:border-charcoal-50">
+              <WhatsAppRequestButton 
+                bookTitle={book.title} 
+                bookAuthor={book.author} 
+                whatsappNumber={process.env.WHATSAPP_NUMBER} 
+              />
+            </div>
+          )}
+
           {/* Expected Return Schedule (if copies checked out) */}
           {!isAvailable && book.loans.length > 0 && (
             <div className="p-4 bg-terracotta-light/60 dark:bg-terracotta/10 rounded-lg border border-terracotta/20 space-y-3">
@@ -146,29 +152,6 @@ export default async function BookDetailPage({ params }: BookDetailPageProps) {
                     <span>Due: <strong>{formatDate(loan.dueDate)}</strong></span>
                   </div>
                 ))}
-              </div>
-
-              {/* Waitlist Button */}
-              <div className="pt-2">
-                {hasRequested ? (
-                  <div className="flex items-center gap-2 text-xs text-primary dark:text-primary-dark font-medium">
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>You are on the waitlist for this book</span>
-                  </div>
-                ) : (
-                  <form action={async () => {
-                    'use server';
-                    await requestBookNotificationAction(book.id);
-                  }}>
-                    <button
-                      type="submit"
-                      className="flex items-center gap-2 px-4 py-2 rounded-lg bg-terracotta hover:bg-terracotta-hover text-white text-xs font-semibold shadow-subtle transition-colors"
-                    >
-                      <Bell className="w-3.5 h-3.5" />
-                      Notify Me When Available
-                    </button>
-                  </form>
-                )}
               </div>
             </div>
           )}

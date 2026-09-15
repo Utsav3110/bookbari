@@ -1,8 +1,9 @@
 import type { Metadata } from 'next';
-import { ClerkProvider, SignInButton, UserButton } from '@clerk/nextjs';
+import { ClerkProvider, UserButton } from '@clerk/nextjs';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { Sidebar } from '@/components/Sidebar';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { FloatingWhatsApp } from '@/components/FloatingWhatsApp';
 import { getCurrentDbUser } from '@/lib/auth';
 import { BookOpen } from 'lucide-react';
 import Link from 'next/link';
@@ -19,8 +20,8 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const dbUser = await getCurrentDbUser();
-  const userId = dbUser?.clerkId ?? null;
   const showSidebar = dbUser?.status === 'APPROVED';
+  const isAdmin = dbUser?.role === 'ADMIN' || dbUser?.role === 'SUPER_ADMIN';
 
   return (
     <ClerkProvider>
@@ -49,24 +50,22 @@ export default async function RootLayout({
               // Public / Unauthenticated / Pending User Full-Width Layout (No Sidebar)
               <div className="min-h-screen flex flex-col justify-between">
                 <header className="sticky top-0 z-40 w-full border-b border-paper-300 dark:border-charcoal-300 bg-paper-100/90 dark:bg-charcoal-200/90 backdrop-blur-md">
-                  <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-                    <Link href="/" className="flex items-center gap-2.5 text-ink dark:text-paper-100 font-bold text-xl tracking-tight">
-                      <div className="w-9 h-9 rounded-xl bg-primary text-white flex items-center justify-center shadow-subtle">
-                        <BookOpen className="w-5 h-5" />
+                  <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+                    <Link href="/" className="flex items-center gap-2 sm:gap-2.5 text-ink dark:text-paper-100 font-bold text-lg sm:text-xl tracking-tight shrink-0">
+                      <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-primary text-white flex items-center justify-center shadow-subtle">
+                        <BookOpen className="w-4 h-4 sm:w-5 sm:h-5" />
                       </div>
-                      <span className="font-serif">Bookbari</span>
+                      <span className="font-serif hidden sm:inline">Bookbari</span>
                     </Link>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                       <ThemeToggle />
-                      {userId || dbUser ? (
+                      {isAdmin ? (
                         <UserButton />
                       ) : (
-                        <SignInButton mode="modal">
-                          <button className="px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-semibold shadow-subtle transition-colors">
-                            Sign In
-                          </button>
-                        </SignInButton>
+                        <Link href="/admin" className="text-xs text-ink-muted hover:text-ink dark:text-paper-400 dark:hover:text-paper-100 transition-colors px-2 py-1">
+                          Admin Login
+                        </Link>
                       )}
                     </div>
                   </div>
@@ -86,6 +85,7 @@ export default async function RootLayout({
                 </footer>
               </div>
             )}
+            <FloatingWhatsApp />
           </ThemeProvider>
         </body>
       </html>

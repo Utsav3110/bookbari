@@ -1,4 +1,3 @@
-import { requireApprovedUser } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { formatDate } from '@/lib/utils';
 import Link from 'next/link';
@@ -17,8 +16,6 @@ interface BooksPageProps {
 }
 
 export default async function CatalogPage({ searchParams }: BooksPageProps) {
-  await requireApprovedUser();
-
   const resolvedSearchParams = await searchParams;
   const query = resolvedSearchParams.q || '';
   const selectedLang = resolvedSearchParams.lang || '';

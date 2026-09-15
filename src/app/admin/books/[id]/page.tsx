@@ -24,7 +24,7 @@ export default async function EditBookPage({ params }: EditBookPageProps) {
     },
     include: {
       loans: {
-        include: { user: true, issuedBy: true },
+        include: { issuedBy: true },
         orderBy: { createdAt: 'desc' },
       },
     },
@@ -173,7 +173,7 @@ export default async function EditBookPage({ params }: EditBookPageProps) {
               <tbody className="divide-y divide-paper-200 dark:divide-charcoal-300">
                 {book.loans.map((loan) => (
                   <tr key={loan.id} className="hover:bg-paper-100/50 dark:hover:bg-charcoal-50/50">
-                    <td className="p-4 font-semibold text-ink dark:text-paper-100">{loan.user.name} ({loan.user.email})</td>
+                    <td className="p-4 font-semibold text-ink dark:text-paper-100">{loan.borrowerName} {loan.borrowerSurname} <span className="text-xs text-ink-muted">({loan.borrowerMobile})</span></td>
                     <td className="p-4 text-ink-muted dark:text-paper-400">{formatDate(loan.issueDate)}</td>
                     <td className="p-4 text-ink-muted dark:text-paper-400">{formatDate(loan.dueDate)}</td>
                     <td className="p-4 text-ink-muted dark:text-paper-400">{loan.returnDate ? formatDate(loan.returnDate) : '—'}</td>

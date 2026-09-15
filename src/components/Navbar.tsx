@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { UserButton, useUser, SignInButton } from '@clerk/nextjs';
+import { UserButton, useUser } from '@clerk/nextjs';
 import { ThemeToggle } from './ThemeToggle';
 import { BookOpen, Library, Users, Clock, AlertTriangle, ShieldCheck, Menu, X, LayoutDashboard } from 'lucide-react';
 import { useState } from 'react';
@@ -22,20 +22,16 @@ export function Navbar({ userRole, userStatus }: NavbarProps) {
   const isAdmin = isApproved && (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN');
   const isSuperAdmin = isApproved && userRole === 'SUPER_ADMIN';
 
-  const userNavLinks = isApproved
-    ? [
-        { href: '/books', label: 'Catalog', icon: BookOpen },
-        { href: '/my-loans', label: 'My Loans', icon: Clock },
-      ]
-    : [];
+  const userNavLinks = [
+    { href: '/books', label: 'Catalog', icon: BookOpen },
+  ];
 
   const adminNavLinks = isAdmin
     ? [
         { href: '/admin', label: 'Overview', icon: LayoutDashboard },
         { href: '/admin/books', label: 'Books', icon: Library },
         { href: '/admin/loans', label: 'Lending', icon: Clock },
-        { href: '/admin/overdue', label: 'Overdue', icon: AlertTriangle },
-        { href: '/admin/users', label: 'Users', icon: Users },
+        { href: '/admin/overdue', label: 'Overdue Report', icon: AlertTriangle },
       ]
     : [];
 
@@ -53,12 +49,12 @@ export function Navbar({ userRole, userStatus }: NavbarProps) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo & Brand */}
-          <div className="flex items-center gap-8">
-            <Link href={isApproved ? '/books' : '/'} className="flex items-center gap-2.5 text-ink dark:text-paper-100 font-bold text-xl tracking-tight hover:opacity-90">
-              <div className="w-9 h-9 rounded-lg bg-primary text-white flex items-center justify-center shadow-subtle">
-                <BookOpen className="w-5 h-5" />
+          <div className="flex items-center gap-4 md:gap-8 shrink-0">
+            <Link href="/books" className="flex items-center gap-2 md:gap-2.5 text-ink dark:text-paper-100 font-bold text-lg md:text-xl tracking-tight hover:opacity-90">
+              <div className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-primary text-white flex items-center justify-center shadow-subtle shrink-0">
+                <BookOpen className="w-4 h-4 md:w-5 md:h-5" />
               </div>
-              <span className="font-serif">Bookbari</span>
+              <span className="font-serif hidden sm:inline">Bookbari</span>
             </Link>
 
             {/* Desktop User Nav */}
@@ -114,21 +110,19 @@ export function Navbar({ userRole, userStatus }: NavbarProps) {
 
             <ThemeToggle />
 
-            {isSignedIn ? (
+            {isAdmin ? (
               <UserButton />
             ) : (
-              <SignInButton mode="modal">
-                <button className="px-4 py-2 rounded-md bg-primary hover:bg-primary-hover text-white text-sm font-medium transition-colors shadow-subtle">
-                  Sign In
-                </button>
-              </SignInButton>
+              <Link href="/admin" className="text-xs text-ink-muted hover:text-ink dark:text-paper-400 dark:hover:text-paper-100 transition-colors">
+                Admin
+              </Link>
             )}
           </div>
 
           {/* Mobile menu button */}
           <div className="flex items-center gap-2 md:hidden">
             <ThemeToggle />
-            {isSignedIn && <UserButton />}
+            {isAdmin && <UserButton />}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="p-2 rounded-md text-ink-muted dark:text-paper-400 hover:text-ink dark:hover:text-paper-100 hover:bg-paper-200 dark:hover:bg-charcoal-50"
@@ -187,13 +181,11 @@ export function Navbar({ userRole, userStatus }: NavbarProps) {
             </div>
           )}
 
-          {!isSignedIn && (
+          {!isAdmin && (
             <div className="pt-2">
-              <SignInButton mode="modal">
-                <button className="w-full py-2.5 rounded-md bg-primary hover:bg-primary-hover text-white text-base font-medium">
-                  Sign In
-                </button>
-              </SignInButton>
+              <Link href="/admin" className="block text-center w-full py-2.5 rounded-md bg-paper-200 dark:bg-charcoal-50 text-ink dark:text-paper-100 text-sm font-medium">
+                Admin Login
+              </Link>
             </div>
           )}
         </div>

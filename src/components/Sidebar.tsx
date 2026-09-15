@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { UserButton, useUser, SignInButton } from '@clerk/nextjs';
+import { UserButton, useUser } from '@clerk/nextjs';
 import { ThemeToggle } from './ThemeToggle';
 import {
   BookOpen,
@@ -14,7 +14,6 @@ import {
   Menu,
   X,
   LayoutDashboard,
-  BookmarkCheck,
   ChevronRight,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -35,12 +34,9 @@ export function Sidebar({ userRole, userStatus }: SidebarProps) {
   const isAdmin = isApproved && (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN');
   const isSuperAdmin = isApproved && userRole === 'SUPER_ADMIN';
 
-  const userNavLinks = isApproved
-    ? [
-        { href: '/books', label: 'Catalog', icon: BookOpen },
-        { href: '/my-borrowings', label: 'My Borrowings', icon: BookmarkCheck },
-      ]
-    : [];
+  const userNavLinks = [
+    { href: '/books', label: 'Catalog', icon: BookOpen },
+  ];
 
   const adminNavLinks = isAdmin
     ? [
@@ -48,7 +44,6 @@ export function Sidebar({ userRole, userStatus }: SidebarProps) {
         { href: '/admin/books', label: 'Book Inventory', icon: Library },
         { href: '/admin/checkouts', label: 'Issued Checkouts', icon: Clock },
         { href: '/admin/overdue', label: 'Overdue Report', icon: AlertTriangle },
-        { href: '/admin/users', label: 'User Approvals', icon: Users },
       ]
     : [];
 
@@ -65,7 +60,7 @@ export function Sidebar({ userRole, userStatus }: SidebarProps) {
     <>
       {/* Mobile Header Bar */}
       <div className="lg:hidden sticky top-0 z-40 w-full flex items-center justify-between px-4 h-16 bg-paper-100/90 dark:bg-charcoal-200/90 backdrop-blur-md border-b border-paper-300 dark:border-charcoal-300">
-        <Link href={isApproved ? '/books' : '/'} className="flex items-center gap-2.5 text-ink dark:text-paper-100 font-bold text-lg">
+        <Link href="/books" className="flex items-center gap-2.5 text-ink dark:text-paper-100 font-bold text-lg">
           <div className="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center shadow-subtle">
             <BookOpen className="w-4 h-4" />
           </div>
@@ -102,7 +97,7 @@ export function Sidebar({ userRole, userStatus }: SidebarProps) {
           {/* Logo & Brand Header */}
           <div className="flex items-center justify-between">
             <Link
-              href={isApproved ? '/books' : '/'}
+              href="/books"
               onClick={() => setMobileMenuOpen(false)}
               className="flex items-center gap-3 text-ink dark:text-paper-100 font-bold text-xl tracking-tight"
             >
@@ -210,17 +205,15 @@ export function Sidebar({ userRole, userStatus }: SidebarProps) {
           </div>
 
           <div className="pt-2 border-t border-paper-200 dark:border-charcoal-300 flex items-center justify-between">
-            {isSignedIn ? (
+            {isAdmin ? (
               <div className="flex items-center gap-3 w-full justify-between">
                 <span className="text-xs text-ink dark:text-paper-100 font-medium">Account</span>
                 <UserButton />
               </div>
             ) : (
-              <SignInButton mode="modal">
-                <button className="w-full py-2 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-semibold shadow-subtle transition-colors">
-                  Sign In
-                </button>
-              </SignInButton>
+              <Link href="/admin" className="w-full text-center py-2 text-[10px] text-ink-muted hover:text-ink dark:text-paper-400 dark:hover:text-paper-100 transition-colors">
+                Admin Login
+              </Link>
             )}
           </div>
         </div>

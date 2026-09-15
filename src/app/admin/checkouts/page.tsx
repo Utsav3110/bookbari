@@ -45,15 +45,15 @@ export default async function AdminCheckoutsPage({ searchParams }: AdminCheckout
           ? {
               OR: [
                 { book: { title: { contains: query, mode: 'insensitive' } } },
-                { user: { name: { contains: query, mode: 'insensitive' } } },
-                { user: { email: { contains: query, mode: 'insensitive' } } },
+                { borrowerName: { contains: query, mode: 'insensitive' } },
+                { borrowerSurname: { contains: query, mode: 'insensitive' } },
+                { borrowerMobile: { contains: query, mode: 'insensitive' } },
               ],
             }
           : {}),
       },
       include: {
         book: true,
-        user: true,
         issuedBy: true,
       },
       orderBy: activeTab === 'active' ? { dueDate: 'asc' } : { returnDate: 'desc' },
@@ -83,7 +83,7 @@ export default async function AdminCheckoutsPage({ searchParams }: AdminCheckout
           </p>
         </div>
 
-        <IssueCheckoutModal availableBooks={availableBooks} approvedUsers={approvedUsers} />
+        <IssueCheckoutModal availableBooks={availableBooks} />
       </div>
 
       {/* Tabs & Search */}
@@ -153,8 +153,8 @@ export default async function AdminCheckoutsPage({ searchParams }: AdminCheckout
                       <div className="text-xs text-ink-muted dark:text-paper-400">by {item.book.author}</div>
                     </td>
                     <td className="p-4">
-                      <div className="font-semibold text-ink dark:text-paper-100">{item.user.name}</div>
-                      <div className="text-xs text-ink-muted dark:text-paper-400">{item.user.email}</div>
+                      <div className="font-semibold text-ink dark:text-paper-100">{item.borrowerName} {item.borrowerSurname}</div>
+                      <div className="text-xs text-ink-muted dark:text-paper-400">{item.borrowerMobile}</div>
                     </td>
                     <td className="p-4 text-ink-muted dark:text-paper-400">{formatDate(item.issueDate)}</td>
                     <td className="p-4 text-ink-muted dark:text-paper-400">{formatDate(item.dueDate)}</td>

@@ -35,86 +35,14 @@ const bookSchema = z.object({
 
 const loanSchema = z.object({
   bookId: z.string().uuid(),
-  userId: z.string().uuid(),
+  borrowerName: z.string().min(1, 'Name is required'),
+  borrowerSurname: z.string().min(1, 'Surname is required'),
+  borrowerMobile: z.string().min(1, 'Mobile is required'),
   issueDate: z.string(),
   dueDate: z.string(),
 });
 
-// --- USER PHONE UPDATE ACTION ---
 
-export async function updateUserPhoneAction(phone: string) {
-  const { auth } = await import('@clerk/nextjs/server');
-  const { userId } = await auth();
-
-  if (!userId) {
-    return { error: 'Not authenticated' };
-  }
-
-  const trimmedPhone = phone.trim();
-  if (!trimmedPhone || !phoneRegex.test(trimmedPhone)) {
-    return { error: 'Please enter a valid phone number (digits, spaces, dashes, 5-20 characters)' };
-  }
-
-  await prisma.user.update({
-    where: { clerkId: userId },
-    data: { phone: trimmedPhone },
-  });
-
-  revalidatePath('/pending-approval');
-  revalidatePath('/admin/users');
-  return { success: true };
-}
-
-// --- ADMIN USER ACTIONS ---
-
-export async function approveUserAction(userId: string) {
-  const idCheck = validateUuid(userId);
-  if (!idCheck.valid) return { error: idCheck.error };
-
-  const admin = await requireAdmin();
-
-  const userToApprove = await prisma.user.findUnique({ where: { id: userId } });
-  if (!userToApprove) {
-    return { error: 'User not found' };
-  }
-
-  // Admin cannot modify an admin or super_admin
-  if (userToApprove.role !== Role.USER && admin.role !== Role.SUPER_ADMIN) {
-    return { error: 'Only Super Admins can modify Admin account status' };
-  }
-
-  await prisma.user.update({
-    where: { id: userId },
-    data: { status: UserStatus.APPROVED },
-  });
-
-  revalidatePath('/admin/users');
-  return { success: true };
-}
-
-export async function rejectUserAction(userId: string) {
-  const idCheck = validateUuid(userId);
-  if (!idCheck.valid) return { error: idCheck.error };
-
-  const admin = await requireAdmin();
-
-  const userToReject = await prisma.user.findUnique({ where: { id: userId } });
-  if (!userToReject) {
-    return { error: 'User not found' };
-  }
-
-  if (userToReject.role !== Role.USER && admin.role !== Role.SUPER_ADMIN) {
-    return { error: 'Only Super Admins can modify Admin account status' };
-  }
-
-  await prisma.user.update({
-    where: { id: userId },
-    data: { status: UserStatus.REJECTED },
-  });
-
-  revalidatePath('/admin/users');
-  return { success: true };
-}
 
 // --- SUPER ADMIN ACTIONS ---
 
@@ -284,13 +212,17 @@ export async function issueCheckoutAction(formData: FormData) {
   const admin = await requireAdmin();
 
   const rawBookId = formData.get('bookId') as string;
-  const rawUserId = formData.get('userId') as string;
+  const borrowerName = formData.get('borrowerName') as string;
+  const borrowerSurname = formData.get('borrowerSurname') as string;
+  const borrowerMobile = formData.get('borrowerMobile') as string;
   const issueDateStr = formData.get('issueDate') as string;
   const dueDateStr = formData.get('dueDate') as string;
 
   const parsed = loanSchema.safeParse({
     bookId: rawBookId,
-    userId: rawUserId,
+    borrowerName,
+    borrowerSurname,
+    borrowerMobile,
     issueDate: issueDateStr,
     dueDate: dueDateStr,
   });
@@ -308,26 +240,19 @@ export async function issueCheckoutAction(formData: FormData) {
 
   // Use a serializable transaction to prevent race conditions on the last copy
   const txResult = await prisma.$transaction(async (tx) => {
-    // 1. Verify target user is approved
-    const borrower = await tx.user.findUnique({
-      where: { id: rawUserId },
-    });
-
-    if (!borrower || borrower.status !== UserStatus.APPROVED) {
-      return { error: 'Books can only be checked out to approved users' };
-    }
-
-    // 2. Check if user already has an active borrowing for this exact book
+    // 2. Check if this exact person already has an active borrowing for this exact book
     const existingActiveLoan = await tx.loan.findFirst({
       where: {
         bookId: rawBookId,
-        userId: rawUserId,
+        borrowerName,
+        borrowerSurname,
+        borrowerMobile,
         status: LoanStatus.BORROWED,
       },
     });
 
     if (existingActiveLoan) {
-      return { error: 'User already has an active checked-out copy of this book' };
+      return { error: 'This person already has an active checked-out copy of this book' };
     }
 
     // 3. Verify availability
@@ -353,7 +278,9 @@ export async function issueCheckoutAction(formData: FormData) {
     await tx.loan.create({
       data: {
         bookId: rawBookId,
-        userId: rawUserId,
+        borrowerName,
+        borrowerSurname,
+        borrowerMobile,
         issuedById: admin.id,
         issueDate,
         dueDate,
@@ -402,62 +329,11 @@ export async function returnCheckoutAction(loanId: string) {
     },
   });
 
-  // Check waitlist for this book
-  const nextInWaitlist = await prisma.bookRequest.findFirst({
-    where: {
-      bookId: loan.bookId,
-      notified: false,
-    },
-    include: { user: true },
-    orderBy: { requestedAt: 'asc' },
-  });
-
-  let notificationMessage = undefined;
-  if (nextInWaitlist) {
-    // Mark waitlist entry as notified
-    await prisma.bookRequest.update({
-      where: { id: nextInWaitlist.id },
-      data: { notified: true },
-    });
-    notificationMessage = `${nextInWaitlist.user.name} (${nextInWaitlist.user.email}) was on the waitlist for this book.`;
-  }
-
   revalidatePath('/admin/checkouts');
   revalidatePath('/admin/overdue');
   revalidatePath('/books');
-  revalidatePath('/my-borrowings');
 
-  return { success: true, waitlistNotification: notificationMessage };
-}
-
-// --- USER STRETCH FEATURE: NOTIFY ME ---
-
-export async function requestBookNotificationAction(bookId: string) {
-  const idCheck = validateUuid(bookId);
-  if (!idCheck.valid) return { error: idCheck.error };
-
-  const user = await requireApprovedUser();
-
-  const existingRequest = await prisma.bookRequest.findUnique({
-    where: {
-      bookId_userId: {
-        bookId,
-        userId: user.id,
-      },
-    },
-  });
-
-  if (existingRequest) {
-    return { error: 'You are already on the waitlist for this book' };
-  }
-
-  await prisma.bookRequest.create({
-    data: {
-      bookId,
-      userId: user.id,
-    },
-  });
-
-  revalidatePath(`/books/${bookId}`);
   return { success: true };
 }
+
+

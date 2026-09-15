@@ -12,14 +12,11 @@ export default async function AdminDashboardPage() {
   // Execute dashboard metrics and recent query lists in parallel
   const [
     totalBooks,
-    pendingUsersCount,
     activeLoansCount,
     overdueLoansCount,
-    recentPendingUsers,
     recentOverdueLoans,
   ] = await Promise.all([
     prisma.book.count({ where: { deletedAt: null } }),
-    prisma.user.count({ where: { status: UserStatus.PENDING } }),
     prisma.loan.count({ where: { status: LoanStatus.BORROWED } }),
     prisma.loan.count({
       where: {
@@ -27,19 +24,14 @@ export default async function AdminDashboardPage() {
         dueDate: { lt: now },
       },
     }),
-    prisma.user.findMany({
-      where: { status: UserStatus.PENDING },
-      orderBy: { createdAt: 'desc' },
-      take: 3,
-    }),
     prisma.loan.findMany({
       where: {
         status: LoanStatus.BORROWED,
         dueDate: { lt: now },
       },
-      include: { book: true, user: true },
+      include: { book: true },
       orderBy: { dueDate: 'asc' },
-      take: 3,
+      take: 5,
     }),
   ]);
 
@@ -123,31 +115,6 @@ export default async function AdminDashboardPage() {
           </div>
         </Link>
 
-        <Link
-          href="/admin/users"
-          className={`p-6 rounded-xl border shadow-subtle hover:shadow-card transition-all group ${
-            pendingUsersCount > 0
-              ? 'bg-terracotta-light/40 dark:bg-terracotta/10 border-terracotta/20'
-              : 'bg-white dark:bg-charcoal-200 border-paper-300 dark:border-charcoal-300'
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-ink-muted dark:text-paper-400">
-              Pending Approvals
-            </span>
-            <div className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors ${
-              pendingUsersCount > 0 ? 'bg-terracotta/10 text-terracotta' : 'bg-paper-200 dark:bg-charcoal-50 text-ink-muted'
-            }`}>
-              <UserCheck className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="mt-4 text-3xl font-serif font-bold text-ink dark:text-paper-100">
-            {pendingUsersCount}
-          </div>
-          <div className="mt-2 text-xs text-terracotta font-medium flex items-center gap-1">
-            Review signups <ArrowRight className="w-3 h-3" />
-          </div>
-        </Link>
       </div>
 
       {/* Quick Action Shortcuts */}
@@ -168,45 +135,11 @@ export default async function AdminDashboardPage() {
             <Plus className="w-4 h-4 text-primary" /> Add New Book
           </Link>
 
-          <Link
-            href="/admin/users"
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-paper-200 dark:bg-charcoal-50 hover:bg-paper-300 dark:hover:bg-charcoal-300 text-ink dark:text-paper-100 text-sm font-medium transition-colors border border-paper-300 dark:border-charcoal-300"
-          >
-            <Users className="w-4 h-4 text-primary" /> Review Users
-          </Link>
         </div>
       </div>
 
       {/* Urgent Attention Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Pending Approvals Widget */}
-        <div className="p-6 bg-white dark:bg-charcoal-200 rounded-xl border border-paper-300 dark:border-charcoal-300 shadow-subtle space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="font-serif font-bold text-lg text-ink dark:text-paper-100">Pending User Approvals</h3>
-            <Link href="/admin/users" className="text-xs text-primary font-medium hover:underline">View all</Link>
-          </div>
-
-          {recentPendingUsers.length === 0 ? (
-            <p className="text-sm text-ink-muted dark:text-paper-400 py-4">No pending user sign-ups.</p>
-          ) : (
-            <div className="space-y-3">
-              {recentPendingUsers.map((user) => (
-                <div key={user.id} className="flex items-center justify-between p-3 bg-paper-100 dark:bg-charcoal-300 rounded-lg border border-paper-200 dark:border-charcoal-50 text-xs">
-                  <div>
-                    <div className="font-bold text-ink dark:text-paper-100">{user.name}</div>
-                    <div className="text-ink-muted dark:text-paper-400">{user.email}</div>
-                  </div>
-                  <Link
-                    href="/admin/users"
-                    className="px-3 py-1 rounded bg-primary text-white font-medium hover:bg-primary-hover transition-colors"
-                  >
-                    Review
-                  </Link>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+      <div className="grid grid-cols-1 gap-6">
 
         {/* Overdue Alerts Widget */}
         <div className="p-6 bg-white dark:bg-charcoal-200 rounded-xl border border-paper-300 dark:border-charcoal-300 shadow-subtle space-y-4">
@@ -223,7 +156,7 @@ export default async function AdminDashboardPage() {
                 <div key={loan.id} className="flex items-center justify-between p-3 bg-red-50/50 dark:bg-red-950/20 rounded-lg border border-red-200/60 dark:border-red-900/30 text-xs">
                   <div>
                     <div className="font-bold text-ink dark:text-paper-100">{loan.book.title}</div>
-                    <div className="text-ink-muted dark:text-paper-400">Borrower: {loan.user.name}</div>
+                    <div className="text-ink-muted dark:text-paper-400">Borrower: {loan.borrowerName} {loan.borrowerSurname}</div>
                   </div>
                   <Link
                     href="/admin/overdue"

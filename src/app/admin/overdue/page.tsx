@@ -18,7 +18,6 @@ export default async function AdminOverduePage() {
     },
     include: {
       book: true,
-      user: true,
     },
     orderBy: { dueDate: 'asc' }, // Oldest due date first = most overdue
   });
@@ -74,13 +73,10 @@ export default async function AdminOverduePage() {
                       <div className="text-xs text-ink-muted dark:text-paper-400">by {loan.book.author}</div>
                     </td>
                     <td className="p-4">
-                      <div className="font-semibold text-ink dark:text-paper-100">{loan.user.name}</div>
-                      <div className="flex items-center gap-1.5 text-xs text-ink-muted dark:text-paper-400 mt-1">
-                        <Mail className="w-3 h-3" /> {loan.user.email}
-                      </div>
-                      {loan.user.phone && (
-                        <div className="flex items-center gap-1.5 text-xs text-ink-muted dark:text-paper-400 mt-0.5">
-                          <Phone className="w-3 h-3" /> {loan.user.phone}
+                      <div className="font-semibold text-ink dark:text-paper-100">{loan.borrowerName} {loan.borrowerSurname}</div>
+                      {loan.borrowerMobile && (
+                        <div className="flex items-center gap-1.5 text-xs text-ink-muted dark:text-paper-400 mt-1">
+                          <Phone className="w-3 h-3" /> {loan.borrowerMobile}
                         </div>
                       )}
                     </td>
