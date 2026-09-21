@@ -2,7 +2,7 @@ import React from 'react';
 import { WhatsAppIcon } from './WhatsAppIcon';
 
 export function FloatingWhatsApp() {
-  const whatsappNumber = '919876543210';
+  const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER;
   const message = encodeURIComponent('Hi Book Baari, I have a question about books or borrowing.');
   const url = `https://wa.me/${whatsappNumber}?text=${message}`;
 

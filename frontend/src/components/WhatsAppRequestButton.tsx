@@ -19,11 +19,11 @@ const formatDDMMYYYY = (dateString: string): string => {
 export function WhatsAppRequestButton({
   bookTitle,
   bookAuthor,
-  whatsappNumber = '919876543210', // Default store number
+  whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER,
 }: WhatsAppRequestButtonProps) {
   const { showToast } = useToast();
   const [showDatePicker, setShowDatePicker] = useState(false);
-  
+
   // Set default pickup date to today in YYYY-MM-DD format
   const todayStr = new Date().toISOString().split('T')[0];
   const [pickupDate, setPickupDate] = useState<string>(todayStr);
@@ -78,11 +78,10 @@ export function WhatsAppRequestButton({
             <button
               type="button"
               onClick={() => setOffsetDate(0)}
-              className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-colors shrink-0 ${
-                pickupDate === todayStr
+              className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-colors shrink-0 ${pickupDate === todayStr
                   ? 'bg-primary text-white'
                   : 'bg-paper-200 dark:bg-charcoal-50 text-ink dark:text-paper-300 hover:bg-paper-300'
-              }`}
+                }`}
             >
               Today
             </button>
@@ -138,11 +137,10 @@ export function WhatsAppRequestButton({
               type="button"
               disabled={!pickupDate}
               onClick={handleSend}
-              className={`flex-1 py-2 rounded-lg text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors ${
-                pickupDate
+              className={`flex-1 py-2 rounded-lg text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors ${pickupDate
                   ? 'bg-[#25D366] hover:bg-[#128C7E] shadow-subtle cursor-pointer'
                   : 'bg-[#25D366]/50 cursor-not-allowed'
-              }`}
+                }`}
             >
               <WhatsAppIcon className="w-4 h-4" /> Send Request
             </button>

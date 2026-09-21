@@ -76,7 +76,8 @@ export default function AdminOverdue() {
     const message = encodeURIComponent(
       `Hi ${loan.borrowerName}, this is a gentle reminder from Book Baari. Your borrowed book "${bookTitle}" was due on ${dueDateFormatted}. Please return it at your earliest convenience. Thank you!`
     );
-    const url = `https://wa.me/${cleanPhone.length > 0 ? cleanPhone : '919876543210'}?text=${message}`;
+    const targetPhone = cleanPhone.length > 0 ? cleanPhone : import.meta.env.VITE_WHATSAPP_NUMBER;
+    const url = `https://wa.me/${targetPhone}?text=${message}`;
     showToast(`Opening WhatsApp reminder for ${loan.borrowerName}...`, 'info');
     window.open(url, '_blank');
   };
