@@ -11,10 +11,10 @@ import authorRoutes from './routes/authorRoutes';
 import statsRoutes from './routes/statsRoutes';
 import languageRoutes from './routes/languageRoutes';
 import genreRoutes from './routes/genreRoutes';
+import healthRoutes from './routes/healthRoutes';
 
 // Load env vars strictly from backend/.env
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
-
 
 const app = express();
 
@@ -44,7 +44,11 @@ app.use(express.json());
 // Connect Database
 connectDB();
 
-// Routes
+// Health Check Routes
+app.use('/api/health', healthRoutes);
+app.use('/health', healthRoutes);
+
+// Main Domain Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/books', bookRoutes);
 app.use('/api/loans', loanRoutes);
@@ -55,7 +59,10 @@ app.use('/api/languages', languageRoutes);
 app.use('/api/genres', genreRoutes);
 
 app.get('/', (req, res) => {
-  res.send('Book Baari API is running...');
+  res.json({
+    message: 'Book Baari API is running...',
+    health: '/api/health',
+  });
 });
 
 const PORT = process.env.PORT || 5000;
