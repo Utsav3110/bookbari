@@ -16,7 +16,7 @@ export default function AdminAuthors() {
   const [authors, setAuthors] = useState<Author[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const { showSuccess, showError, showWarning } = useToast();
+  const { showSuccess, showError } = useToast();
 
   // Confirmation Modal State
   const [deletingAuthor, setDeletingAuthor] = useState<Author | null>(null);
@@ -75,7 +75,7 @@ export default function AdminAuthors() {
     if (isDuplicate) {
       const msg = `Author "${trimmedName}" already exists!`;
       setErrorMsg(msg);
-      showWarning(msg);
+      showError(msg);
       return;
     }
 
@@ -377,7 +377,7 @@ export default function AdminAuthors() {
               </div>
             )}
 
-            <form onSubmit={handleEditAuthor} className="space-y-4">
+            <form onSubmit={handleUpdateAuthor} className="space-y-4">
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-ink-muted dark:text-paper-400 mb-1">
                   Author Full Name *

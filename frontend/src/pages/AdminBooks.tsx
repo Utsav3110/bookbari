@@ -40,7 +40,7 @@ export default function AdminBooks() {
   const [languages, setLanguages] = useState<LanguageItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const { showSuccess, showError, showWarning } = useToast();
+  const { showSuccess, showError } = useToast();
 
   // Confirmation Modal State
   const [deletingBook, setDeletingBook] = useState<Book | null>(null);
@@ -446,7 +446,7 @@ export default function AdminBooks() {
               </div>
             )}
 
-            <form onSubmit={showAddModal ? handleAddBook : handleEditBook} className="space-y-4">
+            <form onSubmit={showAddModal ? handleAddBook : handleUpdateBook} className="space-y-4">
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-ink-muted dark:text-paper-400 mb-1">
                   Book Title *
