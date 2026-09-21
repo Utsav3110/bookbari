@@ -18,6 +18,17 @@ const formatGenre = (genreInput: any): string | undefined => {
   return String(genreInput).trim() || undefined;
 };
 
+// Helper to sanitize public cover URL (formats protocol https:// automatically)
+const sanitizeCoverUrl = (url?: any): string | undefined => {
+  if (!url || typeof url !== 'string') return undefined;
+  let trimmed = url.trim();
+  if (!trimmed) return undefined;
+  if (!/^https?:\/\//i.test(trimmed)) {
+    trimmed = `https://${trimmed.replace(/^\/+/, '')}`;
+  }
+  return trimmed;
+};
+
 // Get all books with author and available quantity calculation (Optimized with Aggregation & Pagination)
 router.get('/', async (req, res) => {
   try {
@@ -189,7 +200,7 @@ router.post('/', protect, adminOnly, async (req: any, res: any) => {
       genre: formatGenre(genre),
       totalQuantity: Number(totalQuantity) || 1,
       description: description ? description.trim() : undefined,
-      coverUrl: coverUrl ? coverUrl.trim() : undefined,
+      coverUrl: sanitizeCoverUrl(coverUrl),
       addedById: mongoose.Types.ObjectId.isValid(req.user._id) ? req.user._id : new mongoose.Types.ObjectId(SUPER_ADMIN_ID),
     });
 
@@ -243,7 +254,7 @@ router.put('/:id', protect, adminOnly, async (req: any, res: any) => {
     if (genre !== undefined) book.genre = formatGenre(genre);
     if (totalQuantity !== undefined) book.totalQuantity = newQuantity;
     if (description !== undefined) book.description = description.trim();
-    if (coverUrl !== undefined) book.coverUrl = coverUrl.trim();
+    if (coverUrl !== undefined) book.coverUrl = sanitizeCoverUrl(coverUrl);
 
     await book.save();
 

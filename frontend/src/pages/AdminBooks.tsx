@@ -3,6 +3,7 @@ import api from '../api/axios';
 import { Library, BookOpen, Plus, Search, Edit2, Trash2, CheckCircle, AlertCircle, RefreshCw, X, ChevronDown, Check } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import { ConfirmModal } from '../components/ConfirmModal';
+import { BookImage, sanitizeImageUrl } from '../components/BookImage';
 
 interface Author {
   _id: string;
@@ -146,7 +147,7 @@ export default function AdminBooks() {
         language: selectedLanguage,
         totalQuantity: Number(totalQuantity) || 1,
         description: description.trim(),
-        coverUrl: coverUrl.trim()
+        coverUrl: sanitizeImageUrl(coverUrl) || ''
       });
 
       const msg = res.data.message || `Book "${title.trim()}" added to inventory!`;
@@ -209,7 +210,7 @@ export default function AdminBooks() {
         language: selectedLanguage,
         totalQuantity: Number(totalQuantity) || 1,
         description: description.trim(),
-        coverUrl: coverUrl.trim()
+        coverUrl: sanitizeImageUrl(coverUrl) || ''
       });
 
       const msg = res.data.message || 'Book updated successfully!';
@@ -340,11 +341,13 @@ export default function AdminBooks() {
                 <tr key={book._id} className="hover:bg-paper-100/50 dark:hover:bg-charcoal-50/30 transition-colors">
                   <td className="p-4 flex items-center gap-3">
                     <div className="w-10 h-14 bg-paper-200 dark:bg-charcoal-50 rounded-md overflow-hidden shrink-0 border border-paper-300 dark:border-charcoal-50 flex items-center justify-center">
-                      {book.coverUrl ? (
-                        <img src={book.coverUrl} alt={book.title} className="w-full h-full object-cover" />
-                      ) : (
-                        <BookOpen className="w-5 h-5 text-ink-muted" />
-                      )}
+                      <BookImage
+                        src={book.coverUrl}
+                        alt={book.title}
+                        fallbackTitle={book.title}
+                        className="w-full h-full object-cover"
+                        iconClassName="w-4 h-4 opacity-40"
+                      />
                     </div>
                     <div>
                       <div className="font-serif font-bold text-ink dark:text-paper-100">{book.title}</div>
@@ -612,15 +615,28 @@ export default function AdminBooks() {
 
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-ink-muted dark:text-paper-400 mb-1">
-                  Cover Image URL (HTTPS)
+                  Cover Image URL (Public / Unsplash / Imgur URL)
                 </label>
-                <input
-                  type="url"
-                  placeholder="https://images.unsplash.com/photo-..."
-                  value={coverUrl}
-                  onChange={(e) => setCoverUrl(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl bg-paper-100 dark:bg-charcoal-300 border border-paper-300 dark:border-charcoal-500 text-ink dark:text-paper-100 text-sm focus:outline-hidden focus:ring-2 focus:ring-primary"
-                />
+                <div className="flex gap-3 items-center">
+                  <input
+                    type="text"
+                    placeholder="https://images.unsplash.com/photo-..."
+                    value={coverUrl}
+                    onChange={(e) => setCoverUrl(e.target.value)}
+                    className="flex-1 px-4 py-2.5 rounded-xl bg-paper-100 dark:bg-charcoal-300 border border-paper-300 dark:border-charcoal-500 text-ink dark:text-paper-100 text-sm focus:outline-hidden focus:ring-2 focus:ring-primary"
+                  />
+                  <div className="w-12 h-14 bg-paper-200 dark:bg-charcoal-50 rounded-lg overflow-hidden shrink-0 border border-paper-300 dark:border-charcoal-50 flex items-center justify-center shadow-subtle" title="Live Cover Preview">
+                    <BookImage
+                      src={coverUrl}
+                      alt="Preview"
+                      fallbackTitle="Preview"
+                      iconClassName="w-4 h-4 opacity-40"
+                    />
+                  </div>
+                </div>
+                <p className="text-[11px] text-ink-muted dark:text-paper-400 mt-1">
+                  Tip: Copy & paste image link from Unsplash, Imgur, or public web image. Protocol (https://) is formatted automatically.
+                </p>
               </div>
 
               <div>

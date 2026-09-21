@@ -12,8 +12,9 @@ import statsRoutes from './routes/statsRoutes';
 import languageRoutes from './routes/languageRoutes';
 import genreRoutes from './routes/genreRoutes';
 
-// Load env vars
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+// Load env vars strictly from backend/.env
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+
 
 const app = express();
 

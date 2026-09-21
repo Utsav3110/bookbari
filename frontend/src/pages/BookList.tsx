@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import api from '../api/axios';
 import { Search, BookOpen, Filter, X, RefreshCw, Globe, Tag, Calendar, CheckCircle } from 'lucide-react';
 import { WhatsAppRequestButton } from '../components/WhatsAppRequestButton';
+import { BookImage } from '../components/BookImage';
 import { useToast } from '../context/ToastContext';
 
 interface Author {
@@ -311,18 +312,12 @@ export default function BookList() {
               >
                 {/* Book Cover Banner / Image */}
                 <div className="h-48 bg-paper-200 dark:bg-charcoal-50 relative overflow-hidden flex items-center justify-center border-b border-paper-300/50 dark:border-charcoal-50">
-                  {book.coverUrl ? (
-                    <img
-                      src={book.coverUrl}
-                      alt={book.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                  ) : (
-                    <div className="flex flex-col items-center gap-2 text-ink-muted dark:text-paper-400">
-                      <BookOpen className="w-12 h-12 opacity-30" />
-                      <span className="text-xs font-serif font-semibold">{book.title}</span>
-                    </div>
-                  )}
+                  <BookImage
+                    src={book.coverUrl}
+                    alt={book.title}
+                    fallbackTitle={book.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
 
                   {/* Availability & Expected Return Date Badge Overlay */}
                   <div className="absolute top-3 right-3 flex flex-col items-end gap-1">
@@ -396,11 +391,12 @@ export default function BookList() {
 
             <div className="flex gap-4 items-start pt-2">
               <div className="w-24 h-36 bg-paper-200 dark:bg-charcoal-50 rounded-xl overflow-hidden shrink-0 border border-paper-300 dark:border-charcoal-border flex items-center justify-center">
-                {selectedBook.coverUrl ? (
-                  <img src={selectedBook.coverUrl} alt={selectedBook.title} className="w-full h-full object-cover" />
-                ) : (
-                  <BookOpen className="w-8 h-8 text-ink-muted opacity-40" />
-                )}
+                <BookImage
+                  src={selectedBook.coverUrl}
+                  alt={selectedBook.title}
+                  fallbackTitle={selectedBook.title}
+                  className="w-full h-full object-cover"
+                />
               </div>
 
               <div className="space-y-2 flex-1">
