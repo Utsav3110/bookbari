@@ -60,7 +60,7 @@ app.use('/api/genres', genreRoutes);
 
 app.get('/', (req, res) => {
   res.json({
-    message: 'Book Baari API is running...',
+    message: 'Bookbaari API is running...',
     health: '/api/health',
   });
 });

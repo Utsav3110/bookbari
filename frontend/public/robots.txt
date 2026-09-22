@@ -1,0 +1,6 @@
+# Allow all search engine crawlers
+User-agent: *
+Allow: /
+
+# Sitemap URL
+Sitemap: https://bookbaari.vercel.app/sitemap.xml

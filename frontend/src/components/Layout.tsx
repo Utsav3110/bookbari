@@ -22,9 +22,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <footer className="border-t border-paper-300 dark:border-charcoal-300 py-4 text-center text-xs text-ink-muted dark:text-paper-400">
                 <div className="max-w-6xl mx-auto px-4 flex justify-between items-center">
                   <div className="font-serif font-semibold text-ink dark:text-paper-100">
-                    Book Baari
+                    Bookbaari
                   </div>
-                  <div>© {new Date().getFullYear()} Book Baari Library</div>
+                  <div>© {new Date().getFullYear()} Bookbaari Library</div>
                 </div>
               </footer>
             </div>
@@ -41,9 +41,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <footer className="border-t border-paper-300 dark:border-charcoal-300 py-6 text-center text-xs text-ink-muted dark:text-paper-400">
               <div className="max-w-6xl mx-auto px-4 flex justify-between items-center">
                 <div className="font-serif font-semibold text-ink dark:text-paper-100">
-                  Book Baari
+                  Bookbaari
                 </div>
-                <div>© {new Date().getFullYear()} Book Baari Library</div>
+                <div>© {new Date().getFullYear()} Bookbaari Library</div>
               </div>
             </footer>
           </div>

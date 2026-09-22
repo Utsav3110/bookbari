@@ -50,7 +50,7 @@ export function Navbar() {
               <div className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-primary text-white flex items-center justify-center shadow-subtle shrink-0">
                 <BookOpen className="w-4 h-4 md:w-5 md:h-5" />
               </div>
-              <span className="font-serif hidden sm:inline">Book Baari</span>
+              <span className="font-serif hidden sm:inline">Bookbaari</span>
             </Link>
 
             {/* Desktop User Nav */}

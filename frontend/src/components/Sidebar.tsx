@@ -75,7 +75,7 @@ export function Sidebar() {
           <div className="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center shadow-subtle">
             <BookOpen className="w-4 h-4" />
           </div>
-          <span className="font-serif">Book Baari</span>
+          <span className="font-serif">Bookbaari</span>
         </Link>
 
         <div className="flex items-center gap-3">
@@ -120,7 +120,7 @@ export function Sidebar() {
                 <BookOpen className="w-5 h-5" />
               </div>
               <div>
-                <span className="font-serif block leading-none">Book Baari</span>
+                <span className="font-serif block leading-none">Bookbaari</span>
                 <span className="text-[10px] font-normal text-ink-muted dark:text-paper-400 uppercase tracking-widest">
                   Library System
                 </span>

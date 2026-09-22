@@ -111,10 +111,10 @@ export default function BookList() {
             Public Library Catalog
           </span>
           <h1 className="text-4xl sm:text-5xl font-serif font-bold text-ink dark:text-paper-100 tracking-tight">
-            Welcome to <span className="text-primary">Book Baari</span>
+            Welcome to <span className="text-primary">Bookbaari</span>
           </h1>
           <p className="text-base text-ink-muted dark:text-paper-300">
-            Browse our collection in English, Hindi, Gujarati and more. Reserve or request your copy via WhatsApp!
+            Bookbaari (Book Baari) is your digital &amp; physical book library. Discover, borrow, and read books across fiction, non-fiction, academic, and regional literature in English, Hindi, Gujarati and more. Reserve or request your copy via WhatsApp!
           </p>
         </div>
       </div>

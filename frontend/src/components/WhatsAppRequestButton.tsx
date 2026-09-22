@@ -38,7 +38,7 @@ export function WhatsAppRequestButton({
     if (!pickupDate) return;
     const formattedDDMMYYYY = formatDDMMYYYY(pickupDate);
     const message = encodeURIComponent(
-      `Hi Book Baari! I would like to reserve/pick up "${bookTitle}" by ${bookAuthor} on date ${formattedDDMMYYYY} (DD/MM/YYYY). Is it available?`
+      `Hi Bookbaari! I would like to reserve/pick up "${bookTitle}" by ${bookAuthor} on date ${formattedDDMMYYYY} (DD/MM/YYYY). Is it available?`
     );
     const url = `https://wa.me/${whatsappNumber}?text=${message}`;
     showToast(`Opening WhatsApp request for "${bookTitle}" on ${formattedDDMMYYYY}...`, 'info');

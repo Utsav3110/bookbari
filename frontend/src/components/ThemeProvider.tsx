@@ -17,7 +17,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     setMounted(true);
-    const savedTheme = (localStorage.getItem('book_baari_theme') as Theme) || 'system';
+    const savedTheme = (localStorage.getItem('bookbaari_theme') || localStorage.getItem('book_baari_theme')) as Theme || 'system';
     setThemeState(savedTheme);
   }, []);
 
@@ -35,7 +35,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
 
     setIsDark(activeDark);
-    localStorage.setItem('book_baari_theme', theme);
+    localStorage.setItem('bookbaari_theme', theme);
   }, [theme, mounted]);
 
   const setTheme = (newTheme: Theme) => {

@@ -74,7 +74,7 @@ export default function AdminOverdue() {
       day: 'numeric'
     });
     const message = encodeURIComponent(
-      `Hi ${loan.borrowerName}, this is a gentle reminder from Book Baari. Your borrowed book "${bookTitle}" was due on ${dueDateFormatted}. Please return it at your earliest convenience. Thank you!`
+      `Hi ${loan.borrowerName}, this is a gentle reminder from Bookbaari. Your borrowed book "${bookTitle}" was due on ${dueDateFormatted}. Please return it at your earliest convenience. Thank you!`
     );
     const targetPhone = cleanPhone.length > 0 ? cleanPhone : import.meta.env.VITE_WHATSAPP_NUMBER;
     const url = `https://wa.me/${targetPhone}?text=${message}`;
